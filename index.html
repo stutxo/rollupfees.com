@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>rollupfees.com</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍭</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100dvh;
+      background: #0a0a0b;
+      color: #f0f0f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .container {
+      background: #131316;
+      border: 1px solid #1e1e24;
+      border-radius: 20px;
+      padding: 3rem 4rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .site-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .subtitle { font-size: 0.9rem; color: #6b6b76; line-height: 1.6; margin-bottom: 2rem; }
+    .block-num { color: #f7931a; }
+    .fees { font-size: 4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .btc { font-size: 1.1rem; color: #6b6b76; }
+    .caveat { font-size: 0.7rem; color: #4a4a52; margin-top: 2rem; }
+    .github-btn { margin-top: 1.5rem; }
+    @media (max-width: 600px) {
+      .container { padding: 1.5rem; border-radius: 16px; }
+      .site-name { font-size: 1.1rem; margin-bottom: 0.5rem; }
+      .subtitle { font-size: 0.7rem; margin-bottom: 1.5rem; }
+      .fees { font-size: clamp(1.5rem, 7vw, 3rem); margin-bottom: 0.5rem; }
+      .btc { font-size: 0.85rem; }
+      .caveat { font-size: 0.6rem; margin-top: 1.5rem; }
+      .github-btn { margin-top: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="site-name">rollupfees.com 🍭</div>
+    <p class="subtitle">Total fees paid by bitcoin rollups<br>as of block <span class="block-num" id="height">...</span></p>
+    <div class="fees">$<span id="usd">...</span></div>
+    <div class="btc"><span id="btc">...</span> BTC</div>
+    <div class="caveat">*citrea data only for now</div>
+    <div class="github-btn">
+      <a class="github-button" href="https://github.com/stutxo/rollupfees.com" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-size="large" data-show-count="true" aria-label="Star stutxo/rollupfees.com on GitHub"></a>
+    </div>
+  </div>
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <script>
+    async function update() {
+      try {
+        const d = await fetch('/api/fees').then(r => r.json());
+        document.getElementById('btc').textContent = d.btc.toFixed(8);
+        document.getElementById('usd').textContent = d.usd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('height').textContent = d.block_height.toLocaleString();
+      } catch(e) { console.error(e); }
+    }
+    update();
+    setInterval(update, 10000);
+  </script>
+</body>
+</html>
