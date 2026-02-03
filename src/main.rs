@@ -194,6 +194,7 @@ async fn sync_loop(conn: Connection) -> Result<()> {
                     progress
                 );
 
+                // Check for reorg
                 if current_height > CITREA_START_HEIGHT {
                     let prev_height = current_height - 1;
                     let local_prev_hash: String = conn
@@ -371,7 +372,7 @@ async fn find_all_rollup_txs(
     // Fetch all prevouts in parallel
     let prevout_map = fetch_prevouts_parallel(client, prevouts_needed).await?;
 
-    // Calculate fees without any RPC calls
+    // Calculate fees
     let results: Vec<(String, u32, u64, f64)> = work
         .into_iter()
         .filter_map(|(tx, rule_id)| {
