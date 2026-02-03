@@ -39,7 +39,7 @@ struct FeesResponse {
 
 const CITREA_START_HEIGHT: u64 = 925165;
 const REVEAL_PREFIX: &[u8] = &[2, 2];
-const PRICE_CACHE_SECS: u64 = 900;
+const PRICE_CACHE_SECS: u64 = 30;
 const BATCH_SIZE: u64 = 50;
 
 struct RollupRule {
