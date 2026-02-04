@@ -35,6 +35,7 @@ struct FeesResponse {
     btc: f64,
     usd: f64,
     block_height: u64,
+    total_vbytes: f64,
 }
 
 const CITREA_START_HEIGHT: u64 = 925165;
@@ -126,12 +127,17 @@ async fn main() -> Result<()> {
 async fn get_fees(
     State(state): State<AppState>,
 ) -> Result<axum::Json<FeesResponse>, axum::http::StatusCode> {
-    let (sats, block_height) = state
+    let (sats, block_height, total_vbytes) = state
         .db
         .call(|conn| {
             let total = get_cached_total(conn)?;
             let height = get_latest_height(conn)?;
-            Ok::<_, rusqlite::Error>((total, height))
+            let vbytes: f64 = conn.query_row(
+                "SELECT IFNULL(SUM(fee_sats / fee_rate), 0) FROM tx_fees",
+                [],
+                |r| r.get(0),
+            )?;
+            Ok::<_, rusqlite::Error>((total, height, vbytes))
         })
         .await
         .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -145,6 +151,7 @@ async fn get_fees(
         btc,
         usd,
         block_height,
+        total_vbytes,
     }))
 }
 
@@ -546,6 +553,11 @@ mod tests {
                 params![100, "abc123"],
             )?;
             conn.execute(
+                "INSERT INTO tx_fees (txid, rollup_id, fee_sats, fee_rate, block_height)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+                params!["tx1", 1, 123456789_i64, 100.0, 100],
+            )?;
+            conn.execute(
                 "UPDATE totals SET total_fee_sats = 123456789 WHERE id = 1",
                 [],
             )?;
@@ -586,6 +598,8 @@ mod tests {
         assert!((json.btc - 1.23456789).abs() < 0.0000001);
         assert!((json.usd - 123456.789).abs() < 0.001);
         assert_eq!(json.block_height, 100);
+        // 123456789 sats / 100.0 sat/vB = 1234567.89 vbytes
+        assert!((json.total_vbytes - 1234567.89).abs() < 0.01);
     }
 
     #[tokio::test]
